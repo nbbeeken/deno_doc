@@ -38,10 +38,12 @@ use params::ParamDef;
 cfg_if! {
   if #[cfg(feature = "rust")] {
     mod printer;
+    mod markdown_printer;
     pub use node::DocNodeKind;
     pub use parser::DocError;
     pub use parser::DocParser;
     pub use printer::DocPrinter;
+    pub use markdown_printer::DocMarkdownPrinter;
   }
 }
 
