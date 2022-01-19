@@ -365,6 +365,7 @@ dependencies = [
  "serde_json",
  "termcolor",
  "tokio",
+ "url",
  "wasm-bindgen",
  "wasm-bindgen-futures",
 ]

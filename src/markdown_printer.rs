@@ -49,7 +49,7 @@ impl<'a> DocMarkdownPrinter<'a> {
     &self,
     w: &mut Formatter<'_>,
     doc_nodes: &[DocNode],
-    indent: i64,
+    _indent: i64,
   ) -> FmtResult {
     if self.use_color {
       //colors::enable_color();
@@ -81,7 +81,7 @@ impl<'a> DocMarkdownPrinter<'a> {
         continue;
       }
 
-      self.format_signature(w, node, indent)?;
+      self.format_signature(w, node, _indent)?;
 
       // write!(
       //   w,
@@ -92,7 +92,7 @@ impl<'a> DocMarkdownPrinter<'a> {
       //   ))
       // )?;
 
-      self.format_jsdoc(w, &node.js_doc, indent + 1)?;
+      self.format_jsdoc(w, &node.js_doc, _indent + 1)?;
       writeln!(w)?;
 
       match node.kind {
@@ -129,23 +129,23 @@ impl<'a> DocMarkdownPrinter<'a> {
     &self,
     w: &mut Formatter<'_>,
     node: &DocNode,
-    indent: i64,
+    _indent: i64,
   ) -> FmtResult {
     write!(w, "### ")?;
     let r = match node.kind {
-      DocNodeKind::ModuleDoc => self.format_module_doc(w, node, indent),
-      DocNodeKind::Function => self.format_function_signature(w, node, indent),
-      DocNodeKind::Variable => self.format_variable_signature(w, node, indent),
-      DocNodeKind::Class => self.format_class_signature(w, node, indent),
-      DocNodeKind::Enum => self.format_enum_signature(w, node, indent),
+      DocNodeKind::ModuleDoc => self.format_module_doc(w, node, _indent),
+      DocNodeKind::Function => self.format_function_signature(w, node, _indent),
+      DocNodeKind::Variable => self.format_variable_signature(w, node, _indent),
+      DocNodeKind::Class => self.format_class_signature(w, node, _indent),
+      DocNodeKind::Enum => self.format_enum_signature(w, node, _indent),
       DocNodeKind::Interface => {
-        self.format_interface_signature(w, node, indent)
+        self.format_interface_signature(w, node, _indent)
       }
       DocNodeKind::TypeAlias => {
-        self.format_type_alias_signature(w, node, indent)
+        self.format_type_alias_signature(w, node, _indent)
       }
       DocNodeKind::Namespace => {
-        self.format_namespace_signature(w, node, indent)
+        self.format_namespace_signature(w, node, _indent)
       }
       DocNodeKind::Import => Ok(()),
     };
@@ -156,7 +156,7 @@ impl<'a> DocMarkdownPrinter<'a> {
     &self,
     w: &mut Formatter<'_>,
     js_doc: &JsDoc,
-    indent: i64,
+    _indent: i64,
   ) -> FmtResult {
     if let Some(doc) = &js_doc.doc {
       for line in doc.lines() {
@@ -167,7 +167,7 @@ impl<'a> DocMarkdownPrinter<'a> {
       writeln!(w)?;
     }
     for tag in &js_doc.tags {
-      self.format_jsdoc_tag(w, tag, indent)?;
+      self.format_jsdoc_tag(w, tag, _indent)?;
     }
     Ok(())
   }
@@ -176,7 +176,7 @@ impl<'a> DocMarkdownPrinter<'a> {
     &self,
     w: &mut Formatter<'_>,
     maybe_doc: &Option<String>,
-    indent: i64,
+    _indent: i64,
   ) -> FmtResult {
     if let Some(doc) = maybe_doc {
       for line in doc.lines() {
@@ -192,19 +192,19 @@ impl<'a> DocMarkdownPrinter<'a> {
     &self,
     w: &mut Formatter<'_>,
     tag: &JsDocTag,
-    indent: i64,
+    _indent: i64,
   ) -> FmtResult {
     match tag {
       JsDocTag::Callback { name, doc } => {
         writeln!(w, "@{} {}", colors::magenta("callback"), colors::bold(name))?;
-        self.format_jsdoc_tag_maybe_doc(w, doc, indent)
+        self.format_jsdoc_tag_maybe_doc(w, doc, _indent)
       }
       JsDocTag::Constructor => {
         writeln!(w, "@{}", colors::magenta("constructor"))
       }
       JsDocTag::Deprecated { doc } => {
         writeln!(w, "@{}", colors::magenta("deprecated"))?;
-        self.format_jsdoc_tag_maybe_doc(w, doc, indent)
+        self.format_jsdoc_tag_maybe_doc(w, doc, _indent)
       }
       JsDocTag::Enum { type_ref, doc } => {
         writeln!(
@@ -213,11 +213,11 @@ impl<'a> DocMarkdownPrinter<'a> {
           colors::magenta("enum"),
           colors::italic_cyan(type_ref)
         )?;
-        self.format_jsdoc_tag_maybe_doc(w, doc, indent)
+        self.format_jsdoc_tag_maybe_doc(w, doc, _indent)
       }
       JsDocTag::Example { doc } => {
         writeln!(w, "@{}", colors::magenta("example"))?;
-        self.format_jsdoc_tag_maybe_doc(w, doc, indent)
+        self.format_jsdoc_tag_maybe_doc(w, doc, _indent)
       }
       JsDocTag::Extends { type_ref, doc } => {
         writeln!(
@@ -226,7 +226,7 @@ impl<'a> DocMarkdownPrinter<'a> {
           colors::magenta("extends"),
           colors::italic_cyan(type_ref)
         )?;
-        self.format_jsdoc_tag_maybe_doc(w, doc, indent)
+        self.format_jsdoc_tag_maybe_doc(w, doc, _indent)
       }
       JsDocTag::Module => {
         writeln!(w, "@{}", colors::magenta("module"))
@@ -241,7 +241,7 @@ impl<'a> DocMarkdownPrinter<'a> {
           write!(w, " {{{}}}", colors::italic_cyan(type_ref))?;
         }
         write!(w, " `{}`", colors::bold(name))?;
-        self.format_jsdoc_tag_maybe_doc(w, doc, indent)
+        self.format_jsdoc_tag_maybe_doc(w, doc, _indent)
       }
       JsDocTag::Public => {
         // writeln!(w, "@{}",  colors::magenta("public"))
@@ -262,7 +262,7 @@ impl<'a> DocMarkdownPrinter<'a> {
           colors::italic_cyan(type_ref),
           colors::bold(name)
         )?;
-        self.format_jsdoc_tag_maybe_doc(w, doc, indent)
+        self.format_jsdoc_tag_maybe_doc(w, doc, _indent)
       }
       JsDocTag::Protected => {
         writeln!(w, "@{}", colors::magenta("protected"))
@@ -275,11 +275,11 @@ impl<'a> DocMarkdownPrinter<'a> {
         if let Some(type_ref) = type_ref {
           write!(w, " {{{}}} ", colors::italic_cyan(type_ref))?;
         }
-        self.format_jsdoc_tag_maybe_doc(w, doc, indent)
+        self.format_jsdoc_tag_maybe_doc(w, doc, _indent)
       }
       JsDocTag::Template { name, doc } => {
         writeln!(w, "@{} {}", colors::magenta("template"), colors::bold(name))?;
-        self.format_jsdoc_tag_maybe_doc(w, doc, indent)
+        self.format_jsdoc_tag_maybe_doc(w, doc, _indent)
       }
       JsDocTag::This { type_ref, doc } => {
         writeln!(
@@ -288,7 +288,7 @@ impl<'a> DocMarkdownPrinter<'a> {
           colors::magenta("this"),
           colors::italic_cyan(type_ref)
         )?;
-        self.format_jsdoc_tag_maybe_doc(w, doc, indent)
+        self.format_jsdoc_tag_maybe_doc(w, doc, _indent)
       }
       JsDocTag::TypeDef {
         name,
@@ -302,7 +302,7 @@ impl<'a> DocMarkdownPrinter<'a> {
           colors::italic_cyan(type_ref),
           colors::bold(name)
         )?;
-        self.format_jsdoc_tag_maybe_doc(w, doc, indent)
+        self.format_jsdoc_tag_maybe_doc(w, doc, _indent)
       }
       JsDocTag::TypeRef { type_ref, doc } => {
         writeln!(
@@ -311,7 +311,7 @@ impl<'a> DocMarkdownPrinter<'a> {
           colors::magenta("typeref"),
           colors::italic_cyan(type_ref)
         )?;
-        self.format_jsdoc_tag_maybe_doc(w, doc, indent)
+        self.format_jsdoc_tag_maybe_doc(w, doc, _indent)
       }
       JsDocTag::Unsupported { value } => {
         if value == "@internal" {
@@ -424,7 +424,7 @@ impl<'a> DocMarkdownPrinter<'a> {
     &self,
     w: &mut Formatter<'_>,
     node: &DocNode,
-    indent: i64,
+    _indent: i64,
   ) -> FmtResult {
     let class_def = node.class_def.as_ref().unwrap();
     for node in &class_def.decorators {
@@ -472,7 +472,7 @@ impl<'a> DocMarkdownPrinter<'a> {
     &self,
     w: &mut Formatter<'_>,
     node: &DocNode,
-    indent: i64,
+    _indent: i64,
   ) -> FmtResult {
     writeln!(
       w,
@@ -486,7 +486,7 @@ impl<'a> DocMarkdownPrinter<'a> {
     &self,
     w: &mut Formatter<'_>,
     node: &DocNode,
-    indent: i64,
+    _indent: i64,
   ) -> FmtResult {
     let function_def = node.function_def.as_ref().unwrap();
     write!(
@@ -521,7 +521,7 @@ impl<'a> DocMarkdownPrinter<'a> {
     &self,
     w: &mut Formatter<'_>,
     node: &DocNode,
-    indent: i64,
+    _indent: i64,
   ) -> FmtResult {
     let interface_def = node.interface_def.as_ref().unwrap();
     write!(w, "`{}` `{}", "interface", &node.name)?;
@@ -551,7 +551,7 @@ impl<'a> DocMarkdownPrinter<'a> {
     &self,
     _w: &mut Formatter<'_>,
     _node: &DocNode,
-    _indent: i64,
+    __indent: i64,
   ) -> FmtResult {
     // currently we do not print out JSDoc in the printer, so there is nothing
     // to print.
@@ -562,7 +562,7 @@ impl<'a> DocMarkdownPrinter<'a> {
     &self,
     w: &mut Formatter<'_>,
     node: &DocNode,
-    indent: i64,
+    _indent: i64,
   ) -> FmtResult {
     let type_alias_def = node.type_alias_def.as_ref().unwrap();
     write!(
@@ -587,7 +587,7 @@ impl<'a> DocMarkdownPrinter<'a> {
     &self,
     w: &mut Formatter<'_>,
     node: &DocNode,
-    indent: i64,
+    _indent: i64,
   ) -> FmtResult {
     writeln!(
       w,
@@ -601,7 +601,7 @@ impl<'a> DocMarkdownPrinter<'a> {
     &self,
     w: &mut Formatter<'_>,
     node: &DocNode,
-    indent: i64,
+    _indent: i64,
   ) -> FmtResult {
     let variable_def = node.variable_def.as_ref().unwrap();
     write!(

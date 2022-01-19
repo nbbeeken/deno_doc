@@ -6,8 +6,7 @@ use deno_doc::find_nodes_by_name_recursively;
 use deno_doc::DocMarkdownPrinter;
 use deno_doc::DocNodeKind;
 use deno_doc::DocParser;
-use deno_doc::DocPrinter;
-use deno_graph::create_type_graph;
+use deno_graph::create_graph;
 use deno_graph::source::LoadFuture;
 use deno_graph::source::LoadResponse;
 use deno_graph::source::Loader;
@@ -17,22 +16,38 @@ use futures::executor::block_on;
 use futures::future;
 use std::env::current_dir;
 use std::fs::read_to_string;
+use std::path::PathBuf;
 use std::sync::Arc;
+use url::Url;
 
-struct SourceFileLoader {}
+struct NodeJSSourceFileLoader {}
 
-impl Loader for SourceFileLoader {
+impl Loader for NodeJSSourceFileLoader {
   fn load(
     &mut self,
     specifier: &ModuleSpecifier,
     _is_dynamic: bool,
   ) -> LoadFuture {
     let result = if specifier.scheme() == "file" {
-      let path = specifier.to_file_path().unwrap();
+      let orig_path = specifier.to_file_path().unwrap();
+
+	  let path: PathBuf = if orig_path == PathBuf::from("buffer") {
+		let buff = PathBuf::from("./js-bson/src/buffer/index.ts");
+		buff
+	  } else {
+		let mut clone_orig = orig_path.clone();
+		clone_orig.set_extension("ts");
+		clone_orig
+	  };
+
+	  let clone_path_cus_rust = path.clone();
+	  let path_string = clone_path_cus_rust.to_str().unwrap();
+
       read_to_string(path)
         .map(|content| {
-          Some(LoadResponse {
-            specifier: specifier.clone(),
+		  let spec = Url::parse(path_string).unwrap();
+		  Some(LoadResponse {
+            specifier: spec,
             maybe_headers: None,
             content: Arc::new(content),
           })
@@ -41,12 +56,12 @@ impl Loader for SourceFileLoader {
     } else {
       Ok(None)
     };
-    Box::pin(future::ready(result))
+    Box::pin(future::ready((specifier.clone(), result)))
   }
 }
 
 fn main() {
-  let matches = App::new("ddoc")
+  let matches = App::new("mddoc")
     .arg(Arg::with_name("source_file").required(true))
     .arg(Arg::with_name("filter"))
     .get_matches();
@@ -59,10 +74,10 @@ fn main() {
       .join(source_file)
       .unwrap();
 
-  let mut loader = SourceFileLoader {};
+  let mut loader = NodeJSSourceFileLoader {};
   let future = async move {
     let source_parser = DefaultSourceParser::new();
-    let graph = create_type_graph(
+    let graph = create_graph(
       vec![source_file.clone()],
       false,
       None,
@@ -70,7 +85,6 @@ fn main() {
       None,
       None,
       Some(&source_parser),
-      None,
     )
     .await;
     let parser = DocParser::new(graph, false, &source_parser);
@@ -79,7 +93,7 @@ fn main() {
     let mut doc_nodes = match parse_result {
       Ok(nodes) => nodes,
       Err(e) => {
-        eprintln!("{}", e);
+        eprintln!("DocError: {:?}", e);
         std::process::exit(1);
       }
     };
@@ -89,9 +103,8 @@ fn main() {
       doc_nodes = find_nodes_by_name_recursively(doc_nodes, filter.to_string());
     }
 
-
-	let result = DocPrinter::new(&doc_nodes, true, false);
-	println!("{}", result);
+    let result = DocMarkdownPrinter::new(&doc_nodes, true, false);
+    println!("{}", result);
   };
 
   block_on(future);

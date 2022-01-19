@@ -130,7 +130,10 @@ impl<'a> DocParser<'a> {
     let module = self
       .graph
       .try_get(specifier)
-      .map_err(|err| DocError::Resolve(err.to_string()))?
+      .map_err(|err| DocError::Resolve(format!(
+		"Unable to load specifier ModuleGraphError: \"{:?}\"",
+		err
+	  )))?
       .ok_or_else(|| {
         DocError::Resolve(format!(
           "Unable to load specifier: \"{}\"",
@@ -187,7 +190,7 @@ impl<'a> DocParser<'a> {
       let resolved_specifier = self
         .graph
         .resolve_dependency(specifier, referrer, true)
-        .ok_or_else(|| DocError::Resolve(specifier.clone()))?;
+        .ok_or_else(|| DocError::Resolve(format!("flatten_reexports {:?}", specifier.clone())))?;
       let doc_nodes = self.parse_with_reexports(resolved_specifier)?;
       let reexports_for_specifier = by_src.get(specifier).unwrap();
 
@@ -341,10 +344,20 @@ impl<'a> DocParser<'a> {
             ),
           };
 
+		  let node_src = if src == "buffer" {
+			"./js-bson/src/buffer/index.ts"
+		  } else {
+			""
+		  };
+
+		  println!("{}", node_src);
+
+
           let resolved_specifier = self
             .graph
-            .resolve_dependency(&src, referrer, true)
-            .ok_or_else(|| DocError::Resolve(src.clone()))?;
+            .resolve_dependency(&node_src, referrer, true)
+            .ok_or_else(|| DocError::Resolve(format!("get_doc_nodes_for_module_imports {}", node_src)))?;
+
           let import_def = ImportDef {
             src: resolved_specifier.to_string(),
             imported: maybe_imported_name,
